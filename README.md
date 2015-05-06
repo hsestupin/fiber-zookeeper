@@ -5,8 +5,8 @@ Native ZooKeeper async API wrapped in Quasar lightweight fibers.
 The rationale is nicely explained at this blogpost http://blog.paralleluniverse.co/2014/08/12/noasync/
 
 Briefly this small library attemts to provide all of the beauty of synchronous API without thread-blocking. Under the hood it utilizes Zookeeper async API and presents fiber-blocking synchronous API to the user. As a result you gain all benefits of both  approaches:
-* readability of synchronous API
-* performance of async
+* readability and simplicity of synchronous API
+* performance of async API just for free
 
 There are 2 implementations right now - for java and clojure. 
 
