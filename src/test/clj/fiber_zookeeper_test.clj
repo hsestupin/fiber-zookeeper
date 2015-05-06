@@ -45,3 +45,15 @@
         (is (zero? (.getVersion stat)))
         (is (zero? (.getDataLength stat)))
         (is (zero? (.getNumChildren stat)))))))
+
+(deftest exists-node-in-fiber
+  (testing "Checking node in fiber-mode through zk async API"
+    (let [zk-client (connect (str "localhost:" zk-port))
+          path "/node"]
+      (is (nil? (in-fiber (exists zk-client path))))
+
+      (create zk-client path)
+      (let [^Stat stat (in-fiber (exists zk-client path))]
+        (is (zero? (.getVersion stat)))
+        (is (zero? (.getDataLength stat)))
+        (is (zero? (.getNumChildren stat)))))))
