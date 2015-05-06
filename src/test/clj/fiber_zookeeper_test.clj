@@ -3,7 +3,8 @@
             [fiber.zookeeper.core :refer :all]
             [co.paralleluniverse.pulsar.core :as p])
   (:import (org.apache.curator.test TestingServer)
-           (org.apache.zookeeper ZooDefs$Ids CreateMode KeeperException$NodeExistsException)))
+           (org.apache.zookeeper ZooDefs$Ids CreateMode KeeperException$NodeExistsException)
+           (org.apache.zookeeper.data Stat)))
 
 (def zk-port 2181)
 
@@ -23,13 +24,24 @@
 (deftest create-node
   (testing "Create node from thread through zk sync API"
     (let [zk-client (connect (str "localhost:" zk-port))]
-      (is (= "/node"
-             (create zk-client "/node" nil ZooDefs$Ids/OPEN_ACL_UNSAFE CreateMode/EPHEMERAL)))
-      (is (thrown? KeeperException$NodeExistsException
-                   (create zk-client "/node" nil ZooDefs$Ids/OPEN_ACL_UNSAFE CreateMode/EPHEMERAL))))))
+      (is (= "/node" (create zk-client "/node")))
+      (is (thrown? KeeperException$NodeExistsException (create zk-client "/node"))))))
 
 (deftest create-node-in-fiber
   (testing "Create node in fiber-mode through zk async API"
-    (let [zk-client (connect (str "localhost:" zk-port))]
-      (is (= "/nodes" (in-fiber (create zk-client "/nodes" nil ZooDefs$Ids/OPEN_ACL_UNSAFE CreateMode/EPHEMERAL))))
-      (is (nil? (in-fiber (create zk-client "/nodes" nil ZooDefs$Ids/OPEN_ACL_UNSAFE CreateMode/EPHEMERAL)))))))
+    (let [zk-client (connect (str "localhost:" zk-port))
+          path "/node"]
+      (is (= path (in-fiber (create zk-client path))))
+      (is (nil? (in-fiber (create zk-client path)))))))
+
+(deftest exists-node
+  (testing "Checking node for existence from thread through zk sync API"
+    (let [zk-client (connect (str "localhost:" zk-port))
+          path "/node"]
+      (is (nil? (exists zk-client path)))
+
+      (create zk-client path)
+      (let [^Stat stat (exists zk-client path)]
+        (is (zero? (.getVersion stat)))
+        (is (zero? (.getDataLength stat)))
+        (is (zero? (.getNumChildren stat)))))))

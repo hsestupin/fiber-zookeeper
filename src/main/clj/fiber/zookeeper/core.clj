@@ -1,6 +1,6 @@
 (ns fiber.zookeeper.core
   (:import (fiber.zookeeper FiberZooKeeperAPI)
-           (org.apache.zookeeper ZooKeeper CreateMode Watcher)
+           (org.apache.zookeeper ZooKeeper CreateMode Watcher ZooDefs$Ids)
            (java.util List)
            (org.apache.zookeeper.data Stat)))
 
@@ -18,12 +18,16 @@
    (ZooKeeper. connect-string session-timeout watcher)))
 
 (defn ^String create
-  [^ZooKeeper zk ^String path data ^List acl ^CreateMode create-mode]
-  (FiberZooKeeperAPI/create zk path data acl create-mode))
+  ([^ZooKeeper zk ^String path]
+   (create zk path nil ZooDefs$Ids/OPEN_ACL_UNSAFE CreateMode/EPHEMERAL))
+  ([^ZooKeeper zk ^String path data ^List acl ^CreateMode create-mode]
+   (FiberZooKeeperAPI/create zk path data acl create-mode)))
 
 (defn ^Stat exists
-  [^ZooKeeper zk ^String path ^Boolean watch]
-  (FiberZooKeeperAPI/exists zk path watch))
+  ([^ZooKeeper zk ^String path]
+   (exists zk path false))
+  ([^ZooKeeper zk ^String path ^Boolean watch]
+   (FiberZooKeeperAPI/exists zk path watch)))
 
 (comment
   (clojure.core/require '(co.paralleluniverse.pulsar [core :as pc]))
@@ -33,7 +37,7 @@
                            zk
                            "/nodes"
                            nil
-                           org.apache.zookeeper.ZooDefs$Ids/OPEN_ACL_UNSAFE
+                           ZooDefs$Ids/OPEN_ACL_UNSAFE
                            CreateMode/EPHEMERAL))
 
   )
