@@ -8,6 +8,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -27,20 +28,48 @@ public class FiberZooKeeperAPI {
    * <p/>
    *
    * @return the actual path of the created node or null if node was not created due to some reasons
+   * @throws org.apache.zookeeper.KeeperException.NodeExistsException if method is invoked from a thread (not from a fiber) and node
+   *                                                                  already exists
    */
   @Suspendable
   public static String create(final ZooKeeper zk, final String path, final byte data[], final List<ACL> acl,
-                              final CreateMode createMode, final Object ctx) throws KeeperException, InterruptedException {
+                              final CreateMode createMode) throws KeeperException, InterruptedException {
     return new StringFiberAsync() {
 
       @Override
       protected void requestAsync() {
-        zk.create(path, data, acl, createMode, this, ctx);
+        zk.create(path, data, acl, createMode, this, null);
       }
 
       @Override
       protected String requestSync() throws KeeperException, InterruptedException, ExecutionException {
         return zk.create(path, data, acl, createMode);
+      }
+    }.run();
+  }
+
+  /**
+   * Fiber-blocking wrapper for {@link ZooKeeper#exists(String, boolean, AsyncCallback.StatCallback, Object)}.
+   * <p/>
+   * This method can be even called from a thread not a fiber. But in that case ZooKeeper thread-blocking API
+   * will be utilized behind the scene - {@link ZooKeeper#exists(String, boolean)}
+   * <p/>
+   *
+   * @return the stat of the node of the given path; return null if no such a
+   * node exists.
+   */
+  @Suspendable
+  public static Stat exists(final ZooKeeper zk, final String path, final boolean watch) throws KeeperException, InterruptedException {
+    return new StatFiberAsync() {
+
+      @Override
+      protected void requestAsync() {
+        zk.exists(path, watch, this, null);
+      }
+
+      @Override
+      protected Stat requestSync() throws KeeperException, InterruptedException, ExecutionException {
+        return zk.exists(path, watch);
       }
     }.run();
   }
@@ -54,6 +83,15 @@ public class FiberZooKeeperAPI {
       asyncCompleted(name);
     }
 
+  }
+
+  private abstract static class StatFiberAsync extends AbstractZooKeeperFiberAsync<Stat>
+      implements AsyncCallback.StatCallback {
+
+    @Override
+    public void processResult(int rc, String path, Object ctx, Stat stat) {
+      asyncCompleted(stat);
+    }
   }
 
   private abstract static class AbstractZooKeeperFiberAsync<T> extends FiberAsync<T, KeeperException> {

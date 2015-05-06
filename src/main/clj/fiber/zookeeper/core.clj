@@ -1,7 +1,8 @@
 (ns fiber.zookeeper.core
   (:import (fiber.zookeeper FiberZooKeeperAPI)
            (org.apache.zookeeper ZooKeeper CreateMode Watcher)
-           (java.util List)))
+           (java.util List)
+           (org.apache.zookeeper.data Stat)))
 
 (defn ^Watcher do-nothing-watcher []
   (reify Watcher
@@ -18,7 +19,11 @@
 
 (defn ^String create
   [^ZooKeeper zk ^String path data ^List acl ^CreateMode create-mode]
-  (FiberZooKeeperAPI/create zk path data acl create-mode nil))
+  (FiberZooKeeperAPI/create zk path data acl create-mode))
+
+(defn ^Stat exists
+  [^ZooKeeper zk ^String path ^Boolean watch]
+  (FiberZooKeeperAPI/exists zk path watch))
 
 (comment
   (clojure.core/require '(co.paralleluniverse.pulsar [core :as pc]))
