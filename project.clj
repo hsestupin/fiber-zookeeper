@@ -6,7 +6,8 @@
                       :url  "http://www.apache.org/licenses/LICENSE-2.0.html"}
             :dependencies [[org.clojure/clojure "1.6.0"]
                            [co.paralleluniverse/pulsar "0.6.2"]
-                           [org.apache.zookeeper/zookeeper "3.4.6"]]
+                           [org.apache.zookeeper/zookeeper "3.4.6"]
+                           [org.apache.curator/curator-test "2.7.1" :scope "test"]]
             :source-paths ["src/main/clj"]
             :test-paths ["src/test/clj"]
             :java-source-paths ["src/main/java"]
