@@ -20,6 +20,9 @@ public class FiberZooKeeperClient {
     this.zk = zk;
   }
 
+  /**
+   * For docs look at {@link FiberZooKeeperAPI#create(ZooKeeper, String, byte[], List, CreateMode, Object)}
+   */
   @Suspendable
   public String create(final String path, final byte data[], final List<ACL> acl,
                        final CreateMode createMode, final Object ctx) throws KeeperException, InterruptedException {
