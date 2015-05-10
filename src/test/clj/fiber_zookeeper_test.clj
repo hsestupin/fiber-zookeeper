@@ -3,7 +3,7 @@
             [fiber.zookeeper.core :refer :all]
             [co.paralleluniverse.pulsar.core :as p])
   (:import (org.apache.curator.test TestingServer)
-           (org.apache.zookeeper ZooDefs$Ids CreateMode KeeperException$NodeExistsException)
+           (org.apache.zookeeper KeeperException$NodeExistsException)
            (org.apache.zookeeper.data Stat)))
 
 (def zk-port 2181)
@@ -23,9 +23,10 @@
 
 (deftest create-node
   (testing "Create node from thread through zk sync API"
-    (let [zk-client (connect (str "localhost:" zk-port))]
-      (is (= "/node" (create zk-client "/node")))
-      (is (thrown? KeeperException$NodeExistsException (create zk-client "/node"))))))
+    (let [zk-client (connect (str "localhost:" zk-port))
+          path "/node"]
+      (is (= path (create zk-client path)))
+      (is (thrown? KeeperException$NodeExistsException (create zk-client path))))))
 
 (deftest create-node-in-fiber
   (testing "Create node in fiber-mode through zk async API"
