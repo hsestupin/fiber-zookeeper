@@ -3,6 +3,7 @@ package fiber.zookeeper;
 import co.paralleluniverse.fibers.Suspendable;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -36,5 +37,13 @@ public class FiberZooKeeperClient {
   @Suspendable
   public static Stat exists(final ZooKeeper zk, final String path, final boolean watch) throws KeeperException, InterruptedException {
     return FiberZooKeeperAPI.exists(zk, path, watch);
+  }
+
+  /**
+   * For docs look at {@link FiberZooKeeperAPI#exists(ZooKeeper, String, Watcher)}
+   */
+  @Suspendable
+  public static Stat exists(final ZooKeeper zk, final String path, final Watcher watcher) throws KeeperException, InterruptedException {
+    return FiberZooKeeperAPI.exists(zk, path, watcher);
   }
 }

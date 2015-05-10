@@ -11,7 +11,7 @@
 
 (defn connect
   ([connect-string]
-   (connect connect-string 1000))
+   (connect connect-string 2000))
   ([connect-string session-timeout]
    (connect connect-string session-timeout (do-nothing-watcher)))
   ([connect-string session-timeout watcher]
@@ -23,21 +23,56 @@
   ([^ZooKeeper zk ^String path data ^List acl ^CreateMode create-mode]
    (FiberZooKeeperAPI/create zk path data acl create-mode)))
 
-(defn ^Stat exists
-  ([^ZooKeeper zk ^String path]
-   (exists zk path false))
-  ([^ZooKeeper zk ^String path ^Boolean watch]
-   (FiberZooKeeperAPI/exists zk path watch)))
+(defmulti ^Stat exists
+          (fn
+            ([_ _ watcher]
+             (class watcher))
+            ([_ _] nil)))
+
+(defmethod exists Boolean
+  [^ZooKeeper zk ^String path ^Boolean watch]
+  (FiberZooKeeperAPI/exists zk path watch))
+
+(defmethod exists Watcher
+  [^ZooKeeper zk ^String path ^Watcher watcher]
+  (FiberZooKeeperAPI/exists zk path watcher))
+
+(defmethod exists :default
+  [^ZooKeeper zk ^String path]
+  (FiberZooKeeperAPI/exists zk path false))
 
 (comment
+  (in-ns 'fiber.zookeeper.core)
   (clojure.core/require '(co.paralleluniverse.pulsar [core :as pc]))
 
-  (def zk (ZooKeeper. "localhost:2181" 3000 nil))
+  (def zk (connect
+            "localhost:2181"
+            3000
+            (reify Watcher
+              (process [_ event]
+                (print "OMG: " event)))))
+
   (pc/join (pc/spawn-fiber create
                            zk
                            "/nodes"
                            nil
                            ZooDefs$Ids/OPEN_ACL_UNSAFE
                            CreateMode/EPHEMERAL))
+
+  (pc/join (pc/spawn-fiber exists
+                           zk
+                           "/nodes"
+                           false))
+
+  (pc/join (pc/spawn-fiber exists
+                           zk
+                           "/nodes"))
+
+  (pc/join (pc/spawn-fiber exists
+                           zk
+                           "/nodes"
+                           (reify Watcher
+                             (process [_ event]
+                               (print "OMG2: " event)))))
 
   )
